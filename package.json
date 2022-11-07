@@ -27,8 +27,7 @@
   "relay": {
     "src": "./src/",
     "schema": "./schema.graphql",
-    "language": "typescript",
-    "eagerEsModules": true
+    "language": "typescript"
   },
   "eslintConfig": {
     "extends": [
