@@ -1,70 +1,57 @@
-# Getting Started with Create React App
+# Example app showing an Error in swc's relay plugin
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+tl;dr: swc-relay doesn't appear to make the option available for eagerEsModules for the relay-compiler. This seems to be causing the issue in my recoil and relay app:
 
-## Available Scripts
+```
+Uncaught TypeError: Cannot read properties of undefined (reading 'operationKind')
+```
 
-In the project directory, you can run:
+I'm using recoil and relay together and I'm having this issue as raised [here](https://github.com/facebookexperimental/Recoil/issues/1998).
 
-### `npm start`
+I've created three seperate branches in this repository other than the `main` branch (the main branch is however uneccessary to look at as it's just the getting started guide for relay.) 
+The three branches to lookat are called: `webpack-babel-relay`, `webpack-babel-relay-failing`, and `webpack-swc-relay`.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+> IMPORTANT NOTE: in order to setup the three branches of the repo to work properly you have to setup your environment variables by adding a github accesstoken. Follow [the steps here in the relay getting started guide to do so](https://relay.dev/docs/getting-started/step-by-step-guide/#21-github-graphql-authentication). 
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+`webpack-babel-relay` is the only branch working of the three mentioned (with recoil atleast). It properly functions and produces the proper result from the following query:
 
-### `npm test`
+```tsx
+// ...
+const RepositoryNameQuery = graphql`
+  query AppRepositoryNameQuery {
+    repository(owner: "facebook", name: "relay") {
+      name
+    }
+  }
+`;
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+const repositoryNameSelector = graphQLSelector<{}, AppRepositoryNameQuery$data>(
+  {
+    key: "RepoName",
+    query: RepositoryNameQuery,
+    environment: myEnvironmentKey,
+    variables: {},
+    mapResponse: (data) => data,
+  }
+);
 
-### `npm run build`
+// React component hook 
+function App() {
+  const data = useRecoilValue(repositoryNameSelector); // <-- this fails in the other two repos.
+  // ...
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+The error that is thrown by the other two branches which are not working is:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```
+Uncaught TypeError: Cannot read properties of undefined (reading 'operationKind')
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+This is an internal Recoil error, so my code doesn't have much control over it.
 
-### `npm run eject`
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+`webpack-babel-relay-failing` fails the above code at the line mentioned and the only difference between it and `webpack-babel-relay` is that `webpack-babel-relay` has the eagerEsModules field set to `true` in the relay config in the package.json.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+`webpack-swc-relay` fails the above code as well despite having the eagerEsModules field set to true in the relay config in the package.json. I have tried alternatives like setting swc's relay plugin configuration but nothing has seemed to work.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
